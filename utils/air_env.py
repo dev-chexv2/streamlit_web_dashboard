@@ -24,8 +24,8 @@ AREA_NO = {
     "광주": "2900000000",
 }
 
-UV_URL = "https://apis.data.go.kr/1360000/LivingWthrIdxServiceV4/getUVIdxV4"
-AIR_URL = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty"
+UV_URL = "https://apis.data.go.kr/1360000/LivingWthrIdxServiceV5/getUVIdxV5"
+AIR_URL = "https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty"
 
 # 데모 비상용 샘플 (7월 한낮 시나리오)
 SAMPLE_UV = {"now": 7, "max_today": 9, "source": "sample"}
