@@ -3,7 +3,7 @@
 app.py — 여름 생존 대시보드 (메인 화면)
 
 실행: streamlit run app.py
-키 설정: .streamlit/secrets.toml (README 참고) 또는 사이드바에 직접 입력
+키 설정: .streamlit/secrets.toml (README 참고) — 개발자 기본 키가 이미 들어있어 별도 입력 불필요
 키가 없어도 내장 샘플 데이터로 전체 기능이 동작합니다. (데모 안전장치)
 """
 from __future__ import annotations
@@ -55,24 +55,11 @@ with st.sidebar:
     st.header("⚙️ 설정")
     city = st.selectbox("도시", list(weather_api.GRID.keys()), index=0)
 
-    kma_default = get_secret("KMA_SERVICE_KEY")
-    gemini_default = get_secret("GEMINI_API_KEY")
+    # API 키는 화면에 노출하지 않고 개발자가 등록해둔 기본 키를 그대로 사용합니다.
+    # (사용된 API는 "ℹ️ 대시보드 안내" 탭에서 확인할 수 있어요.)
+    kma_key = get_secret("KMA_SERVICE_KEY")
+    gemini_key = get_secret("GEMINI_API_KEY")
 
-    kma_input = st.text_input(
-        "기상청 API 키 (비워두면 기본 키 사용)",
-        type="password",
-    )
-    gemini_input = st.text_input(
-        "Gemini API 키 (AI 브리핑·고지서 스캔용, 비워두면 기본 키 사용)",
-        type="password",
-    )
-    if kma_default or gemini_default:
-        st.caption("✅ 개발자가 등록해둔 기본 API 키가 이미 설정되어 있어요. 본인 키를 쓰려면 위 칸에 직접 입력하세요 (개인 키가 우선 적용됩니다).")
-
-    kma_key = kma_input or kma_default
-    gemini_key = gemini_input or gemini_default
-
-    st.divider()
     st.subheader("💡 우리 집 정보")
 
     if "usage_kwh" not in st.session_state:
@@ -164,7 +151,7 @@ def cached_env(key: str, city: str):
 uv, air = cached_env(kma_key, city)
 
 if source == "fallback":
-    st.warning("⚠️ 실시간 API 대신 **내장 샘플 예보**로 동작 중입니다. 사이드바에 기상청 키를 넣으면 실시간으로 전환됩니다.")
+    st.warning("⚠️ 실시간 API 대신 **내장 샘플 예보**로 동작 중입니다. 트래픽이 몰렸을 수 있어요 — 잠시 후 새로고침하면 실시간으로 전환됩니다.")
 
 # 24시간 예보 + 체감온도
 ahead = weather_api.hours_ahead(records, hours=24, now=now)
@@ -353,44 +340,63 @@ with tab3:
     if not ahead:
         st.info("표시할 예보가 없어요.")
     else:
-        fig2, ax2 = plt.subplots(figsize=(9, 3.8))
-        xs = [r["dt"] for r in ahead]
-        ys = [r["feels"] for r in ahead]
-        colors = [GRADE_COLOR[bill_calc.outing_grade(v)] for v in ys]
-        ax2.bar(xs, ys, width=0.03, color=colors)
-        ax2.axhline(33, ls="--", lw=1, color="#ff9800")
-        ax2.text(xs[0], 33.3, "주의(33°C)", fontsize=8, color="#ff9800")
-        ax2.axhline(35, ls="--", lw=1, color="#f4511e")
-        ax2.text(xs[0], 35.3, "경고(35°C)", fontsize=8, color="#f4511e")
-        ax2.set_ylim(min(ys) - 2, max(max(ys) + 2, 37))
-        ax2.set_title("앞으로 24시간 체감온도 (기상청 여름 체감온도 공식)")
-        ax2.set_ylabel("체감온도 (°C)")
-        fig2.autofmt_xdate()
-        import matplotlib.dates as mdates
+        left, right = st.columns([3, 2])
 
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H시"))
-        st.pyplot(fig2)
-        plt.close(fig2)
+        with left:
+            import matplotlib.dates as mdates
 
-        if best_rec and worst_rec:
-            c1, c2 = st.columns(2)
-            c1.success(f"✅ 외출 추천: **{best_rec['dt']:%H시}** — 체감 {best_rec['feels']:.0f}°C ({bill_calc.outing_grade(best_rec['feels'])})")
-            c2.error(f"⛔ 피하세요: **{worst_rec['dt']:%H시}** — 체감 {worst_rec['feels']:.0f}°C ({bill_calc.outing_grade(worst_rec['feels'])})")
+            fig2, ax2 = plt.subplots(figsize=(6, 3.2))
+            xs = [r["dt"] for r in ahead]
+            ys = [r["feels"] for r in ahead]
+            colors = [GRADE_COLOR[bill_calc.outing_grade(v)] for v in ys]
+            ax2.bar(xs, ys, width=0.03, color=colors)
+            ax2.axhline(33, ls="--", lw=1, color="#ff9800")
+            ax2.text(xs[0], 33.3, "주의(33°C)", fontsize=7, color="#ff9800")
+            ax2.axhline(35, ls="--", lw=1, color="#f4511e")
+            ax2.text(xs[0], 35.3, "경고(35°C)", fontsize=7, color="#f4511e")
+            ax2.set_ylim(min(ys) - 2, max(max(ys) + 2, 37))
+            ax2.set_title("앞으로 24시간 체감온도", fontsize=10)
+            ax2.set_ylabel("체감온도 (°C)", fontsize=9)
+            ax2.tick_params(labelsize=8)
+            fig2.autofmt_xdate()
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter("%H시"))
+            fig2.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
+
+        # ── 습도·강수확률 (우산 필요 여부) ──
+        nearest = min(ahead, key=lambda r: abs((r["dt"] - now).total_seconds()))
+        now_humidity = nearest["humidity"]
+        pop_max = max((r["pop"] for r in ahead), default=None)
+        need_umbrella = pop_max is not None and pop_max >= 30
 
         # ── 자외선 + 대기질 (추가 API 2종) ──
-        st.subheader("☀️ 자외선 · 대기질")
         uv_g = air_env.uv_grade(uv.get("max_today"))
         pm25_g = air_env.pm25_grade(air.get("pm25"))
         o3_g = air_env.o3_grade(air.get("o3"))
 
-        e1, e2, e3, e4 = st.columns(4)
-        e1.metric("자외선지수 (오늘 최대)", uv.get("max_today", "—"), uv_g, delta_color="off")
-        e2.metric("미세먼지 PM10", f"{air['pm10']:.0f}" if air.get("pm10") is not None else "—",
-                  air_env.pm10_grade(air.get("pm10")), delta_color="off")
-        e3.metric("초미세먼지 PM2.5", f"{air['pm25']:.0f}" if air.get("pm25") is not None else "—",
-                  pm25_g, delta_color="off")
-        e4.metric("오존 O₃", f"{air['o3']:.3f}" if air.get("o3") is not None else "—",
-                  o3_g, delta_color="off")
+        with right:
+            if best_rec and worst_rec:
+                st.success(f"✅ 외출 추천: **{best_rec['dt']:%H시}** — 체감 {best_rec['feels']:.0f}°C ({bill_calc.outing_grade(best_rec['feels'])})")
+                st.error(f"⛔ 피하세요: **{worst_rec['dt']:%H시}** — 체감 {worst_rec['feels']:.0f}°C ({bill_calc.outing_grade(worst_rec['feels'])})")
+
+            m1, m2 = st.columns(2)
+            m1.metric("자외선지수", uv.get("max_today", "—"), uv_g, delta_color="off")
+            m2.metric(
+                "강수확률 (24h 최대)",
+                f"{pop_max}%" if pop_max is not None else "—",
+                "☔ 우산 챙기세요" if need_umbrella else "비 걱정 없음",
+                delta_color="off",
+            )
+            m3, m4 = st.columns(2)
+            m3.metric("초미세먼지 PM2.5", f"{air['pm25']:.0f}" if air.get("pm25") is not None else "—",
+                      pm25_g, delta_color="off")
+            m4.metric("현재 습도", f"{now_humidity:.0f}%" if now_humidity is not None else "—", delta_color="off")
+            m5, m6 = st.columns(2)
+            m5.metric("미세먼지 PM10", f"{air['pm10']:.0f}" if air.get("pm10") is not None else "—",
+                      air_env.pm10_grade(air.get("pm10")), delta_color="off")
+            m6.metric("오존 O₃", f"{air['o3']:.3f}" if air.get("o3") is not None else "—",
+                      o3_g, delta_color="off")
 
         heat_g = bill_calc.outing_grade(feels_max_rec["feels"]) if feels_max_rec else "쾌적"
         verdict, why = air_env.overall_outing_verdict(heat_g, uv_g, pm25_g, o3_g)
@@ -456,9 +462,8 @@ with tab4:
 
     st.subheader("🔑 API 키 안내")
     st.markdown(
-        "- 이 대시보드는 개발자가 등록해둔 **기본 API 키**로 바로 동작합니다. 별도 설정 없이 사용하셔도 됩니다.\n"
-        "- 기본 키는 무료 티어라 트래픽이 몰리면 일시적으로 샘플 데이터로 자동 전환될 수 있어요(앱이 죽지 않도록 만든 안전장치입니다).\n"
-        "- 본인 계정의 API 키를 쓰고 싶다면 사이드바에 직접 입력하세요 — 입력한 키가 기본 키보다 우선 적용됩니다."
+        "- 이 대시보드는 개발자가 미리 등록해둔 **기본 API 키**로 바로 동작합니다. 사용자가 직접 키를 발급받아 입력할 필요는 없습니다.\n"
+        "- 기본 키는 무료 티어라 트래픽이 몰리면 일시적으로 샘플 데이터로 자동 전환될 수 있어요(앱이 죽지 않도록 만든 안전장치입니다)."
     )
 
     st.subheader("🧭 이 대시보드 보는 법")
@@ -467,7 +472,7 @@ with tab4:
         "2. **오늘의 브리핑**: 세 모듈 결과를 종합한 한 문단 요약 (AI 생성 또는 규칙 기반).\n"
         "3. **💸 전기료 폭탄 경보**: 누진 구간 돌파 예상일과 에어컨이 얹는 금액을 확인하세요.\n"
         "4. **🌙 열대야 & 예약냉방**: 오늘 밤 추천 냉방 시간과 예상 비용을 보여줍니다.\n"
-        "5. **🚶 외출 타이밍**: 24시간 체감온도·자외선·대기질을 종합한 외출 판정을 확인하세요.\n"
+        "5. **🚶 외출 타이밍**: 체감온도·자외선·대기질·강수확률을 종합한 외출 판정을 확인하세요.\n"
         "6. 사이드바에서 지난달 사용량·에어컨 스펙을 고지서/라벨 사진으로 자동 입력하거나 직접 입력할 수 있습니다."
     )
 
