@@ -1,0 +1,294 @@
+{
+ "saved_at": "sample",
+ "note": "울산 7월 폭염+열대야 샘플 시나리오",
+ "records": [
+  {
+   "hour_offset": 0,
+   "temp": 27.3,
+   "humidity": 81,
+   "pop": 0
+  },
+  {
+   "hour_offset": 1,
+   "temp": 26.7,
+   "humidity": 83,
+   "pop": 0
+  },
+  {
+   "hour_offset": 2,
+   "temp": 26.2,
+   "humidity": 84,
+   "pop": 0
+  },
+  {
+   "hour_offset": 3,
+   "temp": 26.1,
+   "humidity": 85,
+   "pop": 0
+  },
+  {
+   "hour_offset": 4,
+   "temp": 26.2,
+   "humidity": 84,
+   "pop": 0
+  },
+  {
+   "hour_offset": 5,
+   "temp": 26.7,
+   "humidity": 83,
+   "pop": 0
+  },
+  {
+   "hour_offset": 6,
+   "temp": 27.3,
+   "humidity": 81,
+   "pop": 0
+  },
+  {
+   "hour_offset": 7,
+   "temp": 28.2,
+   "humidity": 78,
+   "pop": 0
+  },
+  {
+   "hour_offset": 8,
+   "temp": 29.2,
+   "humidity": 74,
+   "pop": 0
+  },
+  {
+   "hour_offset": 9,
+   "temp": 30.3,
+   "humidity": 70,
+   "pop": 0
+  },
+  {
+   "hour_offset": 10,
+   "temp": 31.4,
+   "humidity": 66,
+   "pop": 0
+  },
+  {
+   "hour_offset": 11,
+   "temp": 32.4,
+   "humidity": 62,
+   "pop": 0
+  },
+  {
+   "hour_offset": 12,
+   "temp": 33.3,
+   "humidity": 59,
+   "pop": 0
+  },
+  {
+   "hour_offset": 13,
+   "temp": 33.9,
+   "humidity": 57,
+   "pop": 0
+  },
+  {
+   "hour_offset": 14,
+   "temp": 34.4,
+   "humidity": 56,
+   "pop": 20
+  },
+  {
+   "hour_offset": 15,
+   "temp": 34.5,
+   "humidity": 55,
+   "pop": 20
+  },
+  {
+   "hour_offset": 16,
+   "temp": 34.4,
+   "humidity": 56,
+   "pop": 20
+  },
+  {
+   "hour_offset": 17,
+   "temp": 33.9,
+   "humidity": 57,
+   "pop": 20
+  },
+  {
+   "hour_offset": 18,
+   "temp": 33.3,
+   "humidity": 59,
+   "pop": 0
+  },
+  {
+   "hour_offset": 19,
+   "temp": 32.4,
+   "humidity": 62,
+   "pop": 0
+  },
+  {
+   "hour_offset": 20,
+   "temp": 31.4,
+   "humidity": 66,
+   "pop": 0
+  },
+  {
+   "hour_offset": 21,
+   "temp": 30.3,
+   "humidity": 70,
+   "pop": 0
+  },
+  {
+   "hour_offset": 22,
+   "temp": 29.2,
+   "humidity": 74,
+   "pop": 0
+  },
+  {
+   "hour_offset": 23,
+   "temp": 28.2,
+   "humidity": 78,
+   "pop": 0
+  },
+  {
+   "hour_offset": 24,
+   "temp": 27.3,
+   "humidity": 81,
+   "pop": 0
+  },
+  {
+   "hour_offset": 25,
+   "temp": 26.7,
+   "humidity": 83,
+   "pop": 0
+  },
+  {
+   "hour_offset": 26,
+   "temp": 26.2,
+   "humidity": 84,
+   "pop": 0
+  },
+  {
+   "hour_offset": 27,
+   "temp": 26.1,
+   "humidity": 85,
+   "pop": 0
+  },
+  {
+   "hour_offset": 28,
+   "temp": 26.2,
+   "humidity": 84,
+   "pop": 0
+  },
+  {
+   "hour_offset": 29,
+   "temp": 26.7,
+   "humidity": 83,
+   "pop": 0
+  },
+  {
+   "hour_offset": 30,
+   "temp": 27.3,
+   "humidity": 81,
+   "pop": 0
+  },
+  {
+   "hour_offset": 31,
+   "temp": 28.2,
+   "humidity": 78,
+   "pop": 0
+  },
+  {
+   "hour_offset": 32,
+   "temp": 29.2,
+   "humidity": 74,
+   "pop": 0
+  },
+  {
+   "hour_offset": 33,
+   "temp": 30.3,
+   "humidity": 70,
+   "pop": 0
+  },
+  {
+   "hour_offset": 34,
+   "temp": 31.4,
+   "humidity": 66,
+   "pop": 0
+  },
+  {
+   "hour_offset": 35,
+   "temp": 32.4,
+   "humidity": 62,
+   "pop": 0
+  },
+  {
+   "hour_offset": 36,
+   "temp": 33.3,
+   "humidity": 59,
+   "pop": 0
+  },
+  {
+   "hour_offset": 37,
+   "temp": 33.9,
+   "humidity": 57,
+   "pop": 0
+  },
+  {
+   "hour_offset": 38,
+   "temp": 34.4,
+   "humidity": 56,
+   "pop": 20
+  },
+  {
+   "hour_offset": 39,
+   "temp": 34.5,
+   "humidity": 55,
+   "pop": 20
+  },
+  {
+   "hour_offset": 40,
+   "temp": 34.4,
+   "humidity": 56,
+   "pop": 20
+  },
+  {
+   "hour_offset": 41,
+   "temp": 33.9,
+   "humidity": 57,
+   "pop": 20
+  },
+  {
+   "hour_offset": 42,
+   "temp": 33.3,
+   "humidity": 59,
+   "pop": 0
+  },
+  {
+   "hour_offset": 43,
+   "temp": 32.4,
+   "humidity": 62,
+   "pop": 0
+  },
+  {
+   "hour_offset": 44,
+   "temp": 31.4,
+   "humidity": 66,
+   "pop": 0
+  },
+  {
+   "hour_offset": 45,
+   "temp": 30.3,
+   "humidity": 70,
+   "pop": 0
+  },
+  {
+   "hour_offset": 46,
+   "temp": 29.2,
+   "humidity": 74,
+   "pop": 0
+  },
+  {
+   "hour_offset": 47,
+   "temp": 28.2,
+   "humidity": 78,
+   "pop": 0
+  }
+ ]
+}
