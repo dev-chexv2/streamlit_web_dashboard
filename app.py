@@ -55,16 +55,22 @@ with st.sidebar:
     st.header("⚙️ 설정")
     city = st.selectbox("도시", list(weather_api.GRID.keys()), index=0)
 
-    kma_key = st.text_input(
-        "기상청 API 키 (없으면 샘플 데이터)",
-        value=get_secret("KMA_SERVICE_KEY") or "",
+    kma_default = get_secret("KMA_SERVICE_KEY")
+    gemini_default = get_secret("GEMINI_API_KEY")
+
+    kma_input = st.text_input(
+        "기상청 API 키 (비워두면 기본 키 사용)",
         type="password",
     )
-    anthropic_key = st.text_input(
-        "Anthropic API 키 (AI 브리핑·고지서 스캔용)",
-        value=get_secret("ANTHROPIC_API_KEY") or "",
+    gemini_input = st.text_input(
+        "Gemini API 키 (AI 브리핑·고지서 스캔용, 비워두면 기본 키 사용)",
         type="password",
     )
+    if kma_default or gemini_default:
+        st.caption("✅ 개발자가 등록해둔 기본 API 키가 이미 설정되어 있어요. 본인 키를 쓰려면 위 칸에 직접 입력하세요 (개인 키가 우선 적용됩니다).")
+
+    kma_key = kma_input or kma_default
+    gemini_key = gemini_input or gemini_default
 
     st.divider()
     st.subheader("💡 우리 집 정보")
@@ -78,13 +84,13 @@ with st.sidebar:
     with st.expander("📷 고지서 사진으로 자동 입력"):
         up = st.file_uploader("전기요금 고지서 (jpg/png)", type=["jpg", "jpeg", "png"])
         if up is not None and st.button("AI로 읽기", use_container_width=True):
-            if not anthropic_key:
-                st.error("Anthropic API 키가 필요해요.")
+            if not gemini_key:
+                st.error("Gemini API 키가 필요해요.")
             else:
                 with st.spinner("고지서를 읽는 중..."):
                     try:
                         media = "image/png" if up.name.lower().endswith(".png") else "image/jpeg"
-                        result = vision.scan_bill(up.read(), media, anthropic_key)
+                        result = vision.scan_bill(up.read(), media, gemini_key)
                         if result["usage_kwh"]:
                             st.session_state.usage_kwh = result["usage_kwh"]
                             st.success(
@@ -94,20 +100,21 @@ with st.sidebar:
                         else:
                             st.warning("사용량을 찾지 못했어요. 아래에 직접 입력해주세요.")
                     except Exception as e:
-                        st.error(f"인식 실패: {e}")
+                        print(f"[vision.scan_bill] {e}")  # 서버 로그에만 상세 기록
+                        st.error("인식에 실패했어요. 아래에 직접 입력해주세요.")
 
     # ── 모듈: 에어컨 에너지효율 라벨 스캔 (11장) ──
     with st.expander("📷 에어컨 효율등급 라벨로 자동 입력"):
         st.caption("에어컨 옆면의 초록색 에너지소비효율등급 딱지를 찍어주세요.")
         up2 = st.file_uploader("효율등급 라벨 (jpg/png)", type=["jpg", "jpeg", "png"], key="label_up")
         if up2 is not None and st.button("AI로 읽기", use_container_width=True, key="label_btn"):
-            if not anthropic_key:
-                st.error("Anthropic API 키가 필요해요.")
+            if not gemini_key:
+                st.error("Gemini API 키가 필요해요.")
             else:
                 with st.spinner("라벨을 읽는 중..."):
                     try:
                         media = "image/png" if up2.name.lower().endswith(".png") else "image/jpeg"
-                        label = vision.scan_energy_label(up2.read(), media, anthropic_key)
+                        label = vision.scan_energy_label(up2.read(), media, gemini_key)
                         if label["power_w"]:
                             st.session_state.ac_watts = label["power_w"]
                             msg = f"인식 완료: 소비전력 {label['power_w']}W"
@@ -121,7 +128,8 @@ with st.sidebar:
                         else:
                             st.warning("소비전력을 찾지 못했어요. 아래에 직접 입력해주세요.")
                     except Exception as e:
-                        st.error(f"인식 실패: {e}")
+                        print(f"[vision.scan_energy_label] {e}")  # 서버 로그에만 상세 기록
+                        st.error("인식에 실패했어요. 아래에 직접 입력해주세요.")
 
     last_kwh = st.number_input(
         "지난달 사용량 (kWh)", min_value=0, max_value=2000,
@@ -134,8 +142,6 @@ with st.sidebar:
         help="라벨 인식 결과가 틀렸다면 여기서 직접 고치세요.",
     )
     ac_hours = st.slider("하루 에어컨 가동 시간", 0.0, 24.0, 6.0, 0.5)
-
-    persona = st.radio("브리핑 톤", list(briefing.PERSONAS.keys()), horizontal=False)
 
 # ──────────────────────────────────────────────
 # 데이터 준비
@@ -238,13 +244,15 @@ ctx = {
         else "대기질 정보 없음"
     ),
 }
-text, b_source = briefing.make_briefing(ctx, anthropic_key or None, persona)
-st.info(f"**📣 오늘의 브리핑** ({'AI 생성' if b_source == 'ai' else '규칙 기반'} · {persona})\n\n{text}")
+text, b_source = briefing.make_briefing(ctx, gemini_key or None)
+st.info(f"**📣 오늘의 브리핑** ({'AI 생성' if b_source == 'ai' else '규칙 기반'})\n\n{text}")
 
 # ──────────────────────────────────────────────
 # 탭: 모듈별 상세
 # ──────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["💸 전기료 폭탄 경보", "🌙 열대야 & 예약냉방", "🚶 외출 타이밍"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["💸 전기료 폭탄 경보", "🌙 열대야 & 예약냉방", "🚶 외출 타이밍", "ℹ️ 대시보드 안내"]
+)
 
 # ── 모듈 1: 전기료 (8장 계산 + 시각화) ──
 with tab1:
@@ -430,6 +438,48 @@ with tab3:
                 df[["dt", "기온", "습도", "강수확률", "체감온도"]],
                 use_container_width=True, height=240,
             )
+
+# ── 모듈 4: 대시보드 안내 (출처·사용법·기술스택) ──
+with tab4:
+    st.subheader("📡 데이터·API 출처")
+    st.markdown(
+        """
+| 데이터 | 출처 | 용도 |
+|---|---:|---|
+| 단기예보(기온·습도·강수확률) | 기상청_단기예보 ((구)_동네예보) 조회서비스 · 공공데이터포털 | 체감온도, 열대야 판정 |
+| 자외선지수 | 기상청_생활기상지수 조회서비스(3.0) · 공공데이터포털 | 외출 판정 |
+| 대기질(미세먼지·오존) | 한국환경공단_에어코리아_대기오염정보 · 공공데이터포털 | 외출 판정 |
+| 전기요금 단가표 | 한국전력공사 주택용(저압) 누진제 고시 | 전기료 계산 |
+| AI 브리핑·이미지 인식 | Google Gemini API (`gemini-flash-latest`) | 브리핑 생성, 고지서·라벨 스캔 |
+"""
+    )
+
+    st.subheader("🔑 API 키 안내")
+    st.markdown(
+        "- 이 대시보드는 개발자가 등록해둔 **기본 API 키**로 바로 동작합니다. 별도 설정 없이 사용하셔도 됩니다.\n"
+        "- 기본 키는 무료 티어라 트래픽이 몰리면 일시적으로 샘플 데이터로 자동 전환될 수 있어요(앱이 죽지 않도록 만든 안전장치입니다).\n"
+        "- 본인 계정의 API 키를 쓰고 싶다면 사이드바에 직접 입력하세요 — 입력한 키가 기본 키보다 우선 적용됩니다."
+    )
+
+    st.subheader("🧭 이 대시보드 보는 법")
+    st.markdown(
+        "1. **상단 지표**: 오늘 최고기온·체감온도·열대야 여부·이번 달 예상 전기료를 한눈에 보여줍니다.\n"
+        "2. **오늘의 브리핑**: 세 모듈 결과를 종합한 한 문단 요약 (AI 생성 또는 규칙 기반).\n"
+        "3. **💸 전기료 폭탄 경보**: 누진 구간 돌파 예상일과 에어컨이 얹는 금액을 확인하세요.\n"
+        "4. **🌙 열대야 & 예약냉방**: 오늘 밤 추천 냉방 시간과 예상 비용을 보여줍니다.\n"
+        "5. **🚶 외출 타이밍**: 24시간 체감온도·자외선·대기질을 종합한 외출 판정을 확인하세요.\n"
+        "6. 사이드바에서 지난달 사용량·에어컨 스펙을 고지서/라벨 사진으로 자동 입력하거나 직접 입력할 수 있습니다."
+    )
+
+    st.subheader("🛠️ 사용 기술")
+    st.markdown(
+        "- **Streamlit** — 웹 대시보드 프레임워크\n"
+        "- **Pandas** — 예보 데이터 집계·분석\n"
+        "- **Matplotlib** — 누진 구간·체감온도 시각화\n"
+        "- **Google Gemini API** — AI 브리핑 생성, 고지서·에너지라벨 이미지 인식\n"
+        "- **공공데이터포털 REST API** — 기상청 단기예보·생활기상지수, 에어코리아 대기오염정보\n"
+        "- 모든 외부 API 호출은 실패 시 내장 샘플 데이터로 자동 전환되어 앱이 멈추지 않습니다."
+    )
 
 st.divider()
 st.caption(

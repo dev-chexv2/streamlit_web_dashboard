@@ -3,16 +3,17 @@
 vision.py — 전기 고지서 사진에서 사용량·요금 자동 추출
 
 [담당 챕터] 11장 AI를 활용한 이미지 처리 (+ 6장 프롬프트 엔지니어링)
-[구조] 이미지 → base64 인코딩 → Claude API 호출 → JSON 파싱
+[구조] 이미지 바이트 → Gemini API 호출(멀티모달) → JSON 파싱
        어려운 일(글자 인식)은 AI가 하고, 우리는 파이프라인만 만든다.
 [방어] AI 추출 결과는 화면에서 사용자가 수정할 수 있게 보여준다.
        (13장 'AI 윤리와 책임' 발표 멘트와 연결되는 지점)
 """
 from __future__ import annotations
 
-import base64
 import json
 import re
+
+GEMINI_MODEL = "gemini-flash-latest"
 
 # 6장 프롬프트 엔지니어링 적용:
 #  - 역할 부여 + 출력 형식 고정 + "JSON 외 텍스트 금지"로 파싱 에러 방지
@@ -48,31 +49,18 @@ def scan_bill(image_bytes: bytes, media_type: str, api_key: str) -> dict:
     media_type: "image/jpeg" 또는 "image/png"
     실패 시 예외 발생 → 호출부(app.py)에서 수동 입력으로 안내.
     """
-    import anthropic  # 키가 없을 때 import 에러로 앱이 죽지 않도록 지연 import
+    from google import genai  # 키가 없을 때 import 에러로 앱이 죽지 않도록 지연 import
+    from google.genai import types
 
-    client = anthropic.Anthropic(api_key=api_key)
-    img_b64 = base64.b64encode(image_bytes).decode()
-
-    resp = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=300,
-        messages=[{
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": img_b64,
-                    },
-                },
-                {"type": "text", "text": BILL_PROMPT},
-            ],
-        }],
+    client = genai.Client(api_key=api_key)
+    resp = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=[
+            types.Part.from_bytes(data=image_bytes, mime_type=media_type),
+            BILL_PROMPT,
+        ],
     )
-    text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
-    data = _extract_json(text)
+    data = _extract_json(resp.text or "")
 
     # 타입 정리 (문자열 "350" → 350)
     def _to_int(v):
@@ -95,34 +83,21 @@ def scan_energy_label(image_bytes: bytes, media_type: str, api_key: str) -> dict
     에어컨 에너지소비효율등급 라벨 이미지 →
     {"grade": int|None, "power_w": int|None, "monthly_kwh": float|None, "model_name": str|None}
 
-    고지서 스캔과 완전히 같은 파이프라인 (이미지 → base64 → API → JSON 파싱).
+    고지서 스캔과 완전히 같은 파이프라인 (이미지 바이트 → API → JSON 파싱).
     같은 패턴을 두 번 쓰는 것 자체가 발표 포인트: "파이프라인을 만들면 재사용된다".
     """
-    import anthropic
+    from google import genai
+    from google.genai import types
 
-    client = anthropic.Anthropic(api_key=api_key)
-    img_b64 = base64.b64encode(image_bytes).decode()
-
-    resp = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=300,
-        messages=[{
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": media_type,
-                        "data": img_b64,
-                    },
-                },
-                {"type": "text", "text": LABEL_PROMPT},
-            ],
-        }],
+    client = genai.Client(api_key=api_key)
+    resp = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=[
+            types.Part.from_bytes(data=image_bytes, mime_type=media_type),
+            LABEL_PROMPT,
+        ],
     )
-    text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
-    data = _extract_json(text)
+    data = _extract_json(resp.text or "")
 
     def _to_num(v, cast=int):
         if v is None:

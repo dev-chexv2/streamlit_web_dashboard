@@ -59,15 +59,14 @@ def make_briefing(ctx: dict, api_key: str | None = None, persona: str = "집사 
     """
     if api_key:
         try:
-            import anthropic
+            from google import genai
 
-            client = anthropic.Anthropic(api_key=api_key)
-            resp = client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=400,
-                messages=[{"role": "user", "content": _build_prompt(ctx, persona)}],
+            client = genai.Client(api_key=api_key)
+            resp = client.models.generate_content(
+                model="gemini-flash-latest",
+                contents=_build_prompt(ctx, persona),
             )
-            text = "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
+            text = (resp.text or "").strip()
             if text:
                 return text, "ai"
         except Exception:

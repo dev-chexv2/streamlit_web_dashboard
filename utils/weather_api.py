@@ -31,7 +31,7 @@ GRID = {
 }
 
 BASE_HOURS = [2, 5, 8, 11, 14, 17, 20, 23]  # 발표 시각
-URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
 FALLBACK_PATH = Path(__file__).resolve().parent.parent / "data" / "fallback.json"
 
 
